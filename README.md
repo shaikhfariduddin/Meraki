@@ -1,8 +1,8 @@
-# Multi-Vendor E-Commerce Marketplace
+# Meraki
 
-A production-style, full-stack marketplace where multiple independent sellers
-list and sell products to customers through one platform — built as a
-software engineering portfolio project, not a CRUD demo.
+A production-style, full-stack multi-vendor marketplace where independent
+sellers list and sell products to customers through one platform — built
+as a software engineering portfolio project, not a CRUD demo.
 
 ## Status
 

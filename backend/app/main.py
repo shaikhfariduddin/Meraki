@@ -5,8 +5,8 @@ from app.config import settings
 from app.routers import auth
 
 app = FastAPI(
-    title="Marketplace API",
-    description="Multi-vendor e-commerce marketplace backend.",
+    title="Meraki API",
+    description="Meraki — multi-vendor e-commerce marketplace backend.",
     version="0.1.0",
 )
 
