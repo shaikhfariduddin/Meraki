@@ -1,25 +1,34 @@
 """
 Password hashing and JWT creation/decoding.
 
+Hashing uses the `bcrypt` library directly rather than passlib — passlib
+is unmaintained and has a known incompatibility with bcrypt>=4.1 (its
+internal self-test raises ValueError on newer bcrypt versions). Calling
+bcrypt directly avoids that dependency entirely.
+
 Kept as pure functions with no DB or FastAPI dependency, so they're
 trivial to unit test in isolation.
 """
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.config import settings
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt only uses the first 72 bytes of a password — anything beyond
+# that is silently ignored by the algorithm itself, so we enforce the
+# same limit at the schema level (see schemas/auth.py) rather than
+# truncating quietly here.
 
 
 def hash_password(plain_password: str) -> str:
-    return _pwd_context.hash(plain_password)
+    hashed = bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
-    return _pwd_context.verify(plain_password, password_hash)
+    return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
 def create_access_token(*, subject: str, role: str) -> str:
