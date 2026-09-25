@@ -49,3 +49,23 @@ runs (FastAPI resolves dependencies before the endpoint body). A
 valid token for the wrong role gets `403 Forbidden` from
 `require_role`, not 401 — the request *is* authenticated, it's just
 not permitted.
+
+## Why is Inventory a separate table from Product?
+
+Stock changes far more often than name/price/description do, and once
+checkout exists, stock updates need row-level locking (`SELECT ...
+FOR UPDATE`) without locking the whole product row. Keeping it
+separate also means `Product.available_stock` can be a plain Python
+property (`self.inventory.available_stock`) rather than a denormalized
+column that could drift out of sync.
+
+## Why does approving a seller change their role, but suspending doesn't revert it?
+
+A suspended seller is still fundamentally a seller — just currently
+blocked. Reverting their role to CUSTOMER on suspension would be
+losing information (were they ever approved?) for no benefit, since
+every product-management endpoint checks live SellerProfile.status
+(via `get_current_approved_seller`) anyway, not just role. Role
+answers "what kind of account is this", status answers "can they act
+right now" — conflating them would mean re-deriving one from the
+other later.
