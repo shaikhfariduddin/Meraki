@@ -181,7 +181,7 @@ def test_inactive_products_excluded_from_public_listing(client, db_session):
     client.post(f"/api/products/{product_id}/deactivate", headers=headers)
 
     listing = client.get("/api/products")
-    ids = [p["id"] for p in listing.json()]
+    ids = [p["id"] for p in listing.json()["items"]]
     assert product_id not in ids
 
 
@@ -213,3 +213,95 @@ def test_non_admin_cannot_create_category(client):
         "/api/categories", json={"name": "Shoes", "slug": "shoes-2"}, headers=headers
     )
     assert resp.status_code == 403
+
+
+def _make_product(client, headers, category_id, name, price, brand=None, description=""):
+    resp = client.post(
+        "/api/products",
+        json={
+            "category_id": category_id,
+            "name": name,
+            "description": description,
+            "price": price,
+            "brand": brand,
+        },
+        headers=headers,
+    )
+    return resp.json()
+
+
+def test_search_filters_by_category(client, db_session):
+    headers = make_approved_seller(client, db_session)
+    shoes_id = make_category(client, db_session, name="Shoes", slug="shoes-a")
+    bags_id = make_category(client, db_session, name="Bags", slug="bags-a")
+    _make_product(client, headers, shoes_id, "Running Shoe", "50.00")
+    _make_product(client, headers, bags_id, "Tote Bag", "30.00")
+
+    resp = client.get("/api/products", params={"category_id": shoes_id})
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["name"] == "Running Shoe"
+
+
+def test_search_filters_by_price_range(client, db_session):
+    headers = make_approved_seller(client, db_session)
+    category_id = make_category(client, db_session, name="Misc", slug="misc-a")
+    _make_product(client, headers, category_id, "Cheap Item", "10.00")
+    _make_product(client, headers, category_id, "Mid Item", "50.00")
+    _make_product(client, headers, category_id, "Pricey Item", "200.00")
+
+    resp = client.get("/api/products", params={"min_price": "20", "max_price": "100"})
+    body = resp.json()
+    names = {p["name"] for p in body["items"]}
+    assert names == {"Mid Item"}
+
+
+def test_search_keyword_matches_name_or_description(client, db_session):
+    headers = make_approved_seller(client, db_session)
+    category_id = make_category(client, db_session, name="Footwear", slug="footwear-a")
+    _make_product(
+        client, headers, category_id, "Trail Runner",
+        "80.00", description="Great for hiking",
+    )
+    _make_product(
+        client, headers, category_id, "Formal Shoe",
+        "80.00", description="For the office",
+    )
+
+    resp = client.get("/api/products", params={"keyword": "hiking"})
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["name"] == "Trail Runner"
+
+
+def test_search_sort_price_ascending(client, db_session):
+    headers = make_approved_seller(client, db_session)
+    category_id = make_category(client, db_session, name="Sorted", slug="sorted-a")
+    _make_product(client, headers, category_id, "High", "90.00")
+    _make_product(client, headers, category_id, "Low", "10.00")
+    _make_product(client, headers, category_id, "Mid", "50.00")
+
+    resp = client.get("/api/products", params={"sort": "price_asc"})
+    prices = [p["price"] for p in resp.json()["items"]]
+    assert prices == sorted(prices, key=float)
+
+
+def test_invalid_price_range_returns_400(client):
+    resp = client.get("/api/products", params={"min_price": "100", "max_price": "10"})
+    assert resp.status_code == 400
+
+
+def test_pagination_respects_page_size(client, db_session):
+    headers = make_approved_seller(client, db_session)
+    category_id = make_category(client, db_session, name="Paged", slug="paged-a")
+    for i in range(5):
+        _make_product(client, headers, category_id, f"Item {i}", "10.00")
+
+    resp = client.get(
+        "/api/products", params={"category_id": category_id, "page": 1, "page_size": 2}
+    )
+    body = resp.json()
+    assert body["total"] == 5
+    assert len(body["items"]) == 2
+    assert body["page"] == 1
+    assert body["page_size"] == 2

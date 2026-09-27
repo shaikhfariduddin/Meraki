@@ -20,6 +20,18 @@ class NotProductOwner(Exception):
     pass
 
 
+class InvalidPriceRange(Exception):
+    pass
+
+
+def search_products(db, **filters):
+    min_price = filters.get("min_price")
+    max_price = filters.get("max_price")
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise InvalidPriceRange()
+    return product_repository.search_active(db, **filters)
+
+
 def create_product(db, *, seller_profile, payload):
     if category_repository.get_by_id(db, payload.category_id) is None:
         raise CategoryNotFound(payload.category_id)

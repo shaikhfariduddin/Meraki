@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -64,3 +65,16 @@ class ProductOut(BaseModel):
 
 class StockUpdate(BaseModel):
     available_stock: int = Field(ge=0)
+
+
+class ProductSort(str, Enum):
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+
+
+class ProductListOut(BaseModel):
+    items: list[ProductOut]
+    total: int
+    page: int
+    page_size: int

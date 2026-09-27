@@ -4,6 +4,7 @@ management. Route order matters: /mine must be declared before
 /{product_id} or FastAPI would try to parse "mine" as a UUID.
 """
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -12,19 +13,52 @@ from app.database import get_db
 from app.dependencies.seller import get_current_seller_profile
 from app.models.seller_profile import SellerProfile
 from app.repositories import product_repository
-from app.schemas.product import ProductCreate, ProductOut, ProductUpdate, StockUpdate
+from app.schemas.product import (
+    ProductCreate,
+    ProductListOut,
+    ProductOut,
+    ProductSort,
+    ProductUpdate,
+    StockUpdate,
+)
 from app.services import product_service
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 
-@router.get("", response_model=list[ProductOut])
+@router.get("", response_model=ProductListOut)
 def list_products(
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=20, ge=1, le=100),
+    keyword: str | None = Query(default=None, max_length=255),
+    category_id: uuid.UUID | None = Query(default=None),
+    seller_id: uuid.UUID | None = Query(default=None),
+    brand: str | None = Query(default=None, max_length=255),
+    min_price: Decimal | None = Query(default=None, ge=0),
+    max_price: Decimal | None = Query(default=None, ge=0),
+    in_stock_only: bool = Query(default=False),
+    sort: ProductSort = Query(default=ProductSort.NEWEST),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    return product_repository.list_active(db, skip=skip, limit=limit)
+    try:
+        items, total = product_service.search_products(
+            db,
+            keyword=keyword,
+            category_id=category_id,
+            seller_id=seller_id,
+            brand=brand,
+            min_price=min_price,
+            max_price=max_price,
+            in_stock_only=in_stock_only,
+            sort=sort.value,
+            page=page,
+            page_size=page_size,
+        )
+    except product_service.InvalidPriceRange:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="min_price cannot exceed max_price"
+        )
+    return ProductListOut(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/mine", response_model=list[ProductOut])
