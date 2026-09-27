@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import admin, auth, categories, products, sellers
+from app.routers import admin, auth, cart, categories, products, sellers
 
 app = FastAPI(
     title="Meraki API",
@@ -23,6 +23,7 @@ app.include_router(sellers.router)
 app.include_router(admin.router)
 app.include_router(categories.router)
 app.include_router(products.router)
+app.include_router(cart.router)
 
 
 @app.get("/api/health", tags=["health"])

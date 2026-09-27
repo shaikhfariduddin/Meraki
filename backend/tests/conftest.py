@@ -18,6 +18,7 @@ from app.main import app
 from app.models import user  # noqa: F401 — registers the User model on Base.metadata
 from app.models import seller_profile  # noqa: F401
 from app.models import category, product  # noqa: F401
+from app.models import cart  # noqa: F401
 
 engine = create_engine(
     "sqlite:///:memory:",
