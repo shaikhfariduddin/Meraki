@@ -80,3 +80,27 @@ class OrderListOut(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class SellerOrderDetailOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    order_id: uuid.UUID
+    status: OrderStatus
+    total_amount: Decimal
+    shipping_address: dict
+    items: list[OrderItemOut]
+    history: list[StatusHistoryOut]
+    created_at: datetime
+
+
+class SellerOrderListOut(BaseModel):
+    items: list[SellerOrderDetailOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class SellerOrderStatusUpdate(BaseModel):
+    status: OrderStatus

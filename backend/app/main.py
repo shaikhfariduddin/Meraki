@@ -11,6 +11,7 @@ from app.routers import (
     checkout,
     orders,
     products,
+    seller_orders,
     sellers,
 )
 
@@ -37,6 +38,7 @@ app.include_router(cart.router)
 app.include_router(addresses.router)
 app.include_router(checkout.router)
 app.include_router(orders.router)
+app.include_router(seller_orders.router)
 
 
 @app.get("/api/health", tags=["health"])

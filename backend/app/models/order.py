@@ -122,6 +122,11 @@ class SellerOrder(Base):
     history: Mapped[list["OrderStatusHistory"]] = relationship(
         "OrderStatusHistory", order_by="OrderStatusHistory.changed_at", viewonly=True
     )
+    order: Mapped["Order"] = relationship("Order", viewonly=True)
+
+    @property
+    def shipping_address(self) -> dict:
+        return self.order.shipping_address if self.order else {}
 
 
 class OrderItem(Base):

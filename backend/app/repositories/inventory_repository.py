@@ -28,3 +28,18 @@ def decrement_stock(db: Session, product_id: uuid.UUID, quantity: int) -> int:
         .execution_options(synchronize_session=False)
     )
     return result.rowcount
+
+
+def increment_stock(db: Session, product_id: uuid.UUID, quantity: int) -> None:
+    """
+    Return `quantity` units to stock — used when a seller cancels an
+    order. No conditional WHERE needed here (unlike decrement_stock):
+    adding stock back can't oversell anything, so there's no race to
+    guard against.
+    """
+    db.execute(
+        update(Inventory)
+        .where(Inventory.product_id == product_id)
+        .values(available_stock=Inventory.available_stock + quantity)
+        .execution_options(synchronize_session=False)
+    )
