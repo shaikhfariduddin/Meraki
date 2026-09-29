@@ -23,7 +23,9 @@ from app.config import settings
 
 
 def hash_password(plain_password: str) -> str:
-    hashed = bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt())
+    hashed = bcrypt.hashpw(
+        plain_password.encode("utf-8"), bcrypt.gensalt(rounds=settings.bcrypt_rounds)
+    )
     return hashed.decode("utf-8")
 
 

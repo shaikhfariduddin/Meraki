@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     frontend_url: str = "http://localhost:5173"
+    # bcrypt cost factor. 12 is a sane production default; tests set 4 (the
+    # minimum) so the suite is not dominated by password hashing.
+    bcrypt_rounds: int = 12
 
 
 settings = Settings()

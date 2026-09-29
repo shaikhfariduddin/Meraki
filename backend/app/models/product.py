@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Integer,
@@ -77,6 +78,13 @@ class ProductImage(Base):
 
 class Inventory(Base):
     __tablename__ = "inventory"
+    # Defense in depth: even if application logic ever has a bug, the database
+    # itself refuses to store negative stock (see inventory_repository).
+    __table_args__ = (
+        CheckConstraint("available_stock >= 0", name="ck_inventory_available_stock_nonneg"),
+        CheckConstraint("reserved_stock >= 0", name="ck_inventory_reserved_stock_nonneg"),
+    )
+
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     product_id: Mapped[uuid.UUID] = mapped_column(

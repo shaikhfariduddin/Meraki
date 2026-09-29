@@ -13,7 +13,7 @@ from app.database import Base
 
 # Import every model module here so it registers on Base.metadata
 # before autogenerate compares against it.
-from app.models import user  # noqa: F401
+import app.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

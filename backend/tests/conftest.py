@@ -6,6 +6,7 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:5173")
+os.environ.setdefault("BCRYPT_ROUNDS", "4")  # bcrypt's minimum cost: keeps the suite fast
 
 import pytest
 from sqlalchemy import create_engine
@@ -15,10 +16,7 @@ from fastapi.testclient import TestClient
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import user  # noqa: F401 — registers the User model on Base.metadata
-from app.models import seller_profile  # noqa: F401
-from app.models import category, product  # noqa: F401
-from app.models import cart  # noqa: F401
+from app import models as _models  # noqa: F401 — registers every table on Base.metadata
 
 engine = create_engine(
     "sqlite:///:memory:",
