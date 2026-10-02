@@ -13,6 +13,7 @@ from app.routers import (
     products,
     seller_orders,
     sellers,
+    wishlist,
 )
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.include_router(addresses.router)
 app.include_router(checkout.router)
 app.include_router(orders.router)
 app.include_router(seller_orders.router)
+app.include_router(wishlist.router)
 
 
 @app.get("/api/health", tags=["health"])

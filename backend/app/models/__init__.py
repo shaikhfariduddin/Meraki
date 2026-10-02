@@ -10,4 +10,5 @@ from app.models import (  # noqa: F401
     product,
     seller_profile,
     user,
+    wishlist,
 )
