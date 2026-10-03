@@ -1,14 +1,17 @@
 """
-/api/sellers/* — a customer applying for seller access, and checking
-the status of their own application.
+/api/sellers/* - a customer applying for seller access, checking the
+status of their own application, and (once approved) their analytics.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.dependencies.seller import get_current_seller_profile
+from app.models.seller_profile import SellerProfile
 from app.models.user import User
-from app.repositories import seller_repository
+from app.repositories import analytics_repository, seller_repository
+from app.schemas.analytics import SellerAnalyticsOut
 from app.schemas.seller import SellerApplicationCreate, SellerProfileOut
 from app.services import seller_service
 
@@ -45,3 +48,11 @@ def my_application(
             status_code=status.HTTP_404_NOT_FOUND, detail="No seller application found"
         )
     return profile
+
+
+@router.get("/analytics", response_model=SellerAnalyticsOut)
+def my_analytics(
+    seller_profile: SellerProfile = Depends(get_current_seller_profile),
+    db: Session = Depends(get_db),
+):
+    return analytics_repository.seller_summary(db, seller_profile.id)

@@ -1,5 +1,5 @@
 """
-/api/admin/* — every route here requires ADMIN, enforced once at the
+/api/admin/* - every route here requires ADMIN, enforced once at the
 router level rather than repeated on each endpoint.
 """
 import uuid
@@ -11,7 +11,8 @@ from app.database import get_db
 from app.dependencies.auth import require_role
 from app.models.seller_profile import SellerStatus
 from app.models.user import UserRole
-from app.repositories import seller_repository
+from app.repositories import analytics_repository, seller_repository
+from app.schemas.analytics import AdminAnalyticsOut
 from app.schemas.seller import SellerProfileOut, SellerReviewRequest
 from app.services import seller_service
 
@@ -20,6 +21,11 @@ router = APIRouter(
     tags=["admin"],
     dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
+
+
+@router.get("/analytics", response_model=AdminAnalyticsOut)
+def get_admin_analytics(db: Session = Depends(get_db)):
+    return analytics_repository.admin_summary(db)
 
 
 @router.get("/sellers", response_model=list[SellerProfileOut])
